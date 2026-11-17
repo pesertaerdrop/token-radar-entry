@@ -1,10 +1,10 @@
-// Token Radar radar-4 dashboard. Reads window.RADAR (written beside
+// Token Radar radar-5 dashboard. Reads window.RADAR (written beside
 // dashboard/ by main.ts) and renders the ranked board, filters, a detail
 // view for every protocol with its fitted-curve breakdown, an inline
 // SVG of the fitted curve against the 94 comparables, and netted farm
 // economics on a dated timeline, the live-token comparison, and the
-// validation section: leave-one-out, walk-forward, terciles and the
-// terms the blind test dropped. No network: every byte shown is in
+// validation section: walk-forward first, then leave-one-out, terciles
+// and the terms the blind test dropped. No network: every byte shown is in
 // data.js. No protocol name is special-cased anywhere.
 (function () {
   'use strict';
@@ -112,7 +112,7 @@
 
   function header() {
     return el('header', { class: 'top' },
-      el('div', { class: 'brand' }, el('span', { class: 'mark' }), el('span', { class: 'brand-name', text: 'Token Radar · radar-4' })),
+      el('div', { class: 'brand' }, el('span', { class: 'mark' }), el('span', { class: 'brand-name', text: 'Token Radar · radar-5' })),
       el('div', { class: 'top-meta' },
         el('span', null, 'Snapshot ', el('b', { text: DATA.as_of })),
         el('span', null, 'Floor ', el('b', { text: '$' + Math.round(DATA.floor_usd / 1e6) + 'M TVL' })),
@@ -122,7 +122,7 @@
   function lede() {
     var top = DATA.rows[0];
     var v = DATA.validation;
-    var full = v.loo.filter(function (e) { return e.model.indexOf('(radar-4)') >= 0; })[0];
+    var full = v.loo.filter(function (e) { return e.model.indexOf('(radar-5)') >= 0; })[0];
     var flat = v.loo.filter(function (e) { return e.model.indexOf('flat') === 0; })[0];
     var size2 = v.loo.filter(function (e) { return e.model.indexOf('2-term') >= 0; })[0];
     var med = DATA.rows.slice().map(function (r) { return r.implied_value_usd; }).sort(function (a, b) { return a - b; });
@@ -135,17 +135,17 @@
       ),
       el('div', { class: 'verdict' },
         el('b', { text: 'The verdict in one line: ' }),
-        'the curve beats a flat multiple and beats radar-3 on every blind test — leave-one-out median error ',
+        'out of time, the curve beats a flat multiple and beats radar-3 on ',
+        el('b', { text: wfWins + ' of ' + v.walk_forward.length + ' walk-forward cuts' }),
+        ' — and leave-one-out median error ',
         el('b', { text: full && flat ? fmtApe(full.loo_median_ape) + ' vs ' + fmtApe(flat.loo_median_ape) + ' flat' : '—' }),
-        ' and walk-forward better than both on ',
-        el('b', { text: wfWins + ' of ' + v.walk_forward.length + ' cuts' }),
-        '.'
+        '. Every challenger tested for this version lost the same blind tests, so the model is unchanged.'
       ),
       el('div', { class: 'facts' },
         el('div', { class: 'fact' }, el('span', { text: 'Watchlist covered' }), el('b', { text: DATA.watchlist_size + ' / ' + DATA.watchlist_size })),
         el('div', { class: 'fact' }, el('span', { text: 'Pre-token rows scored' }), el('b', { text: String(DATA.board_size) })),
         el('div', { class: 'fact' }, el('span', { text: 'Live-token comparables fit on' }), el('b', { text: String(v.comparables_n) + ' (34 left out)' })),
-        el('div', { class: 'fact' }, el('span', { text: 'LOO median error, radar-4 vs 2-term curve' }), el('b', { text: full && size2 ? fmtApe(full.loo_median_ape) + ' vs ' + fmtApe(size2.loo_median_ape) : '—' }))
+        el('div', { class: 'fact' }, el('span', { text: 'LOO median error, radar-5 vs 2-term curve' }), el('b', { text: full && size2 ? fmtApe(full.loo_median_ape) + ' vs ' + fmtApe(size2.loo_median_ape) : '—' }))
       ));
   }
 
@@ -232,7 +232,7 @@
       ));
     });
     return el('div', { class: 'panel' }, el('div', { class: 'table-wrap' }, el('table', null,
-      el('caption', { class: 'sub', text: 'Pre-token protocols, strongest implied value first. Rank range is the p10–p90 rank over 200 refits of the curve. Farm call is the net of the costed plan. Select a row for its model breakdown and farm plan.' }),
+      el('caption', { class: 'sub', text: 'Pre-token protocols, strongest implied value first. Rank range is the p10–p90 rank over 500 refits of the curve. Farm call is the net of the costed plan. Select a row for its model breakdown and farm plan.' }),
       el('thead', null, el('tr', null, sortHeader('implied', 'Rank'), sortHeader('range', 'Rank range'), sortHeader('name', 'Protocol'), sortHeader('tvl', 'TVL'), sortHeader('growth', '7d'), sortHeader('age', 'Age'), sortHeader('base', 'Curve ×'), sortHeader('implied', 'Implied value'), sortHeader('net', 'Farm net'), el('th', { scope: 'col', text: 'Token' }))),
       tbody)));
   }
@@ -261,7 +261,7 @@
     var v = DATA.validation;
     var m = DATA.model;
     var looRows = v.loo.map(function (e) {
-      var best = e.model.indexOf('(radar-4)') >= 0;
+      var best = e.model.indexOf('(radar-5)') >= 0;
       return el('tr', null,
         el('td', { text: e.model + (best ? '  ← this entry' : '') }),
         el('td', { class: 'num', text: fmtApe(e.loo_median_ape) }),
@@ -274,7 +274,8 @@
         el('td', { class: 'num', text: fmtApe(w.flat_median_ape) }),
         el('td', { class: 'num', text: fmtApe(w.size_median_ape) }),
         el('td', { class: 'num', text: fmtApe(w.full_median_ape) }),
-        el('td', { class: 'num', text: fmtApe(w.radar3_median_ape) }));
+        el('td', { class: 'num', text: fmtApe(w.radar3_median_ape) }),
+        el('td', { class: 'num', text: fmtApe(w.cand_b_median_ape) }));
     });
     var tercRows = v.terciles.map(function (t) {
       return el('tr', null,
@@ -290,20 +291,20 @@
         el('td', { text: d.verdict }));
     });
     return el('section', { class: 'panel model' },
-      el('h2', { text: 'Validation — the curve was tested blind, radar-4' }),
-      el('p', { class: 'sub', text: 'One function scores every row, from the snapshot alone. No protocol name is special-cased, and no row is hand-picked. The fit is log(market cap) = ' + v.fit_intercept + ' + ' + v.fit_slope + ' × log(TVL) + ' + v.fit_chain_coef + ' × log(chains), fit on ' + v.comparables_n + ' live-token protocols with a positive market cap. ' + v.excluded_n + ' live-token protocols are left out of the fit — CEX tokens and wrapped, staked or bridged products (' + v.excluded_categories.join(', ') + ') — because an exchange token is equity in a company and a wrapped product\u2019s market cap prices the token it wraps, not a new launch. R² is ' + v.fit_r2 + ' in log space; the flat 0.25x multiple scores ' + v.flat_r2 + '. That is a weak fit in absolute terms — the median error is still about 82% — and the board says so rather than hiding it. What the curve earns is relative: it beats the flat baseline and radar-3 where it matters, out of sample.' }),
+      el('h2', { text: 'Validation — the curve was tested blind, radar-5' }),
+      el('p', { class: 'sub', text: 'One function scores every row, from the snapshot alone. No protocol name is special-cased, and no row is hand-picked. The fit is log(market cap) = ' + v.fit_intercept + ' + ' + v.fit_slope + ' × log(TVL) + ' + v.fit_chain_coef + ' × log(chains), fit on ' + v.comparables_n + ' live-token protocols with a positive market cap. ' + v.excluded_n + ' live-token protocols are left out of the fit — CEX tokens and wrapped, staked or bridged products (' + v.excluded_categories.join(', ') + ') — because an exchange token is equity in a company and a wrapped product\u2019s market cap prices the token it wraps, not a new launch. What the curve earns is relative and out of sample: it beats the flat baseline and radar-3 on every walk-forward cut and on leave-one-out. The model is unchanged from radar-4: every challenger tested for this version lost the same blind tests, and the dropped-terms table below names them.' }),
       el('div', { class: 'formula' }, 'implied = round( exp(' + v.fit_intercept + ' + ' + v.fit_slope + ' × log(tvl_usd) + ' + v.fit_chain_coef + ' × log(chains)) × growth × maturity × discount )'),
       el('p', { class: 'sub', text: 'The chains term is fitted, not a bonus: its coefficient is negative, so once TVL is controlled for, a protocol spread over more chains trades at a lower multiple — breadth dilutes depth. radar-3 gave every extra chain a +1% bonus; the blind tests say that was backwards. Growth is 1 + clamp(change_7d, ' + m.growth_floor + ', ' + m.growth_cap + ') / 100 × ' + m.growth_weight + '; maturity is ' + m.maturity_floor + ' + min(age_days, ' + m.maturity_days + ') / ' + m.maturity_days + ' × ' + m.maturity_range + '; an unknown age uses ' + m.unknown_age_days + ' days. A wrapped, staked or bridged product is discounted 0.5x. These priors move a row by a few percent at most; the fitted terms do the pricing.' }),
+      el('h3', { text: 'Walk-forward first — train on older listings, test on newer ones' }),
+      el('div', { class: 'table-wrap' }, el('table', null,
+        el('caption', { class: 'sub', text: 'The model never sees the test protocols while it is fit. radar-5 beats the flat baseline and radar-3 on all four cuts — by 19 to 26 points — and beats the 2-term curve on all four too. This is the strongest evidence for the fitted chains term: it is the out-of-time test, not an in-sample fit. Candidate B — the same curve fit on all 128 comparables with fitted CEX and wrapped-product dummies — loses to radar-5 on three of the four cuts, which is why the 34 stay out of the fit.' }),
+        el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Test set' }), el('th', { scope: 'col', text: 'Train / test n' }), el('th', { scope: 'col', text: 'Flat median error' }), el('th', { scope: 'col', text: 'Size curve' }), el('th', { scope: 'col', text: 'radar-5' }), el('th', { scope: 'col', text: 'radar-3' }), el('th', { scope: 'col', text: 'Candidate B' }))),
+        el('tbody', null, wfRows))),
       el('h3', { text: 'Leave-one-out — refit on 93, predict the 94th' }),
       el('div', { class: 'table-wrap' }, el('table', null,
-        el('caption', { class: 'sub', text: 'Median and mean absolute percentage error on the 94 clean comparables. Lower is better. radar-4 wins the median at 81.7% against 88.3% flat and 86.2% for radar-3\u2019s curve on the same holdouts. The honest counterweight: radar-4\u2019s mean error, 657%, is worse than the 2-term curve\u2019s 651% and radar-3\u2019s 647% — a few huge misses get worse while the typical protocol gets better.' }),
+        el('caption', { class: 'sub', text: 'Median and mean absolute percentage error on the 94 clean comparables. Lower is better. radar-5 wins the median at 81.7% against 88.3% flat and 86.2% for radar-3\u2019s curve on the same holdouts. The honest counterweight: radar-5\u2019s mean error, 657%, is worse than the 2-term curve\u2019s 651% and radar-3\u2019s 647% — a few huge misses get worse while the typical protocol gets better. Every challenger tested for radar-5 — all 128 with dummies (85.6%), a shrunk chains term (85.9%), chains plus fitted growth (83.8%) — sits below in the same table and lost on the median.' }),
         el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Model' }), el('th', { scope: 'col', text: 'LOO median error' }), el('th', { scope: 'col', text: 'LOO mean error' }))),
         el('tbody', null, looRows))),
-      el('h3', { text: 'Walk-forward — train on older listings, test on newer ones' }),
-      el('div', { class: 'table-wrap' }, el('table', null,
-        el('caption', { class: 'sub', text: 'The model never sees the test protocols while it is fit. radar-4 beats the flat baseline and radar-3 on all four cuts — by 8 to 26 points — and beats the 2-term curve on all four too. This is the strongest evidence for the fitted chains term: it is the out-of-time test, not an in-sample fit.' }),
-        el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Test set' }), el('th', { scope: 'col', text: 'Train / test n' }), el('th', { scope: 'col', text: 'Flat median error' }), el('th', { scope: 'col', text: 'Size curve' }), el('th', { scope: 'col', text: 'radar-4' }), el('th', { scope: 'col', text: 'radar-3' }))),
-        el('tbody', null, wfRows))),
       el('h3', { text: 'Why a flat multiple fails — the size curve in one table' }),
       el('div', { class: 'table-wrap' }, el('table', null,
         el('caption', { class: 'sub', text: 'Median mcap/TVL by TVL tercile of the live comparables. Big protocols trade at a twentieth of the multiple small ones do. A flat multiple prices a $2.7B protocol as if it were a $7M one.' }),
@@ -311,10 +312,10 @@
         el('tbody', null, tercRows))),
       el('h3', { text: 'Terms the blind test dropped' }),
       el('div', { class: 'table-wrap' }, el('table', null,
-        el('caption', { class: 'sub', text: 'Each term was fit and tested leave-one-out against the 2-term size curve (median error 83.6%). Every one of them lost, so none of them is in radar-4 as a fitted term — except chains, which won and is in the model.' }),
+        el('caption', { class: 'sub', text: 'Each term was fit and tested leave-one-out against the 2-term size curve (median error 83.6%). Every one of them lost, so none of them is in radar-5 as a fitted term — except chains, which won and is in the model.' }),
         el('thead', null, el('tr', null, el('th', { scope: 'col', text: 'Term' }), el('th', { scope: 'col', text: 'LOO median error' }), el('th', { scope: 'col', text: 'Verdict' }))),
         el('tbody', null, dropRows))),
-      el('div', { class: 'note' }, el('b', { text: 'Honest limits. ' }), 'A protocol records no token in this snapshot — that is not proof it has none, and this board never predicts whether or when a token is issued. Implied value is this entry\u2019s own claim from TVL, growth, age and chains, not a price and not a promise. Rank ranges come from ' + v.bootstrap_refits + ' refits of the curve on resampled comparables (seed ' + v.bootstrap_seed + '): the top ranks are stable because the TVL gaps between them are wide, not because the model is precise. Farm steps are a plan, not advice; farming costs gas, locks capital and can lose money.'));
+      el('div', { class: 'note' }, el('b', { text: 'Honest limits. ' }), 'A protocol records no token in this snapshot — that is not proof it has none, and this board never predicts whether or when a token is issued. Implied value is this entry\u2019s own claim from TVL, growth, age and chains, not a price and not a promise. In-sample R² is ' + v.fit_r2 + ' in log space (the flat 0.25x multiple scores ' + v.flat_r2 + '): a weak fit in absolute terms — the median error is still about 82% — and the board says so rather than hiding it. Rank ranges come from ' + v.bootstrap_refits + ' refits of the curve on resampled comparables (seed ' + v.bootstrap_seed + '): the top ranks are stable because the TVL gaps between them are wide, not because the model is precise. Farm steps are a plan, not advice; farming costs gas, locks capital and can lose money.'));
   }
 
   var dialog = el('dialog', { class: 'detail', id: 'detail', 'aria-labelledby': 'detail-title' });
@@ -364,8 +365,11 @@
       out += '<circle cx="' + X(Math.log10(p.tvl_usd)).toFixed(1) + '" cy="' + Y(Math.log10(p.mcap_usd)).toFixed(1) + '" r="2.4" class="dot"/>';
     });
     var rx = X(Math.log10(row.tvl_usd)), ry = Y(Math.log10(rowCurve));
+    // Anchor the label to the left of the dot when the dot sits in the
+    // right half of the plot, so a long name never runs past the edge.
+    var labelRight = rx <= (W - L - R) * 0.55 + L;
     out += '<circle cx="' + rx.toFixed(1) + '" cy="' + ry.toFixed(1) + '" r="6" class="row-dot"/>'
-      + '<text x="' + Math.min(rx + 10, W - 110).toFixed(1) + '" y="' + Math.max(ry - 8, T + 8).toFixed(1) + '" class="row-label">' + escHtml(row.name) + '</text>'
+      + '<text x="' + (labelRight ? Math.min(rx + 10, W - 110).toFixed(1) : Math.max(rx - 10, L + 110).toFixed(1)) + '" y="' + Math.max(ry - 8, T + 8).toFixed(1) + '" class="row-label"' + (labelRight ? '' : ' text-anchor="end"') + '>' + escHtml(row.name) + '</text>'
       + '</svg>';
     return out;
   }
@@ -382,7 +386,7 @@
     var callText = farm.call === 'farm' ? 'Farm' : farm.call === 'thin' ? 'Thin — farm only at minimum size' : 'Skip — do not farm this row';
     dialog.appendChild(el('div', { class: 'detail-head' },
       el('div', null,
-        el('span', { class: 'brand-name', text: 'Rank ' + row.rank + ' of ' + DATA.board_size + ' · rank range ' + row.rank_p10 + '–' + row.rank_p90 + ' over 200 refits' }),
+        el('span', { class: 'brand-name', text: 'Rank ' + row.rank + ' of ' + DATA.board_size + ' · rank range ' + row.rank_p10 + '–' + row.rank_p90 + ' over 500 refits' }),
         el('h2', { id: 'detail-title', text: row.name }),
         el('p', { class: 'sub', text: (row.category || 'Other') + ' · ' + (row.chains && row.chains.length ? row.chains.join(', ') : 'an unnamed chain') + ' · listed ' + (row.listed_at || 'unknown') })
       ),

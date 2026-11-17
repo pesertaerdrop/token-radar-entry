@@ -1,6 +1,7 @@
-// Token Radar, model radar-4: a fitted comps/size curve, tested
-// out-of-sample, not a flat multiple. Computed only from the sealed
-// snapshot. No protocol name is ever special-cased.
+// Token Radar, model radar-5: the radar-4 fitted comps/size curve,
+// kept unchanged after radar-5's challengers all failed the bar
+// (see below). Computed only from the sealed snapshot. No protocol
+// name is ever special-cased.
 //
 //   Core: log-log OLS of market cap on TVL and chain count over the
 //         snapshot's own live-token protocols — only the ones that
@@ -21,12 +22,31 @@
 //         chain a +1% bonus; the data say the opposite, and the blind
 //         tests agree: the chains term wins leave-one-out (81.7% vs
 //         84.0% median error for the curve without it) and walk-forward
-//         on all four cuts (58-67% vs 74-76%). The model is picked by
+//         on all four cuts (58-67% vs 79-86% flat and 82-87% radar-3). The model is picked by
 //         blind tests, not by in-sample fit — in-sample R2 is low
 //         (0.11) and the dashboard says exactly that, with the LOO
 //         mean error (656% vs 598% without chains) reported as the
 //         honest counterweight: a few huge misses get worse, the
 //         typical protocol and every out-of-time test get better.
+//   radar-5 challengers, all tested against the same bar (beat
+//         radar-4 on LOO median AND on all four walk-forward cuts)
+//         and all rejected: (B) fit on all 128 with fitted indicator
+//         dummies for CEX and for wrapped / staked / bridged products
+//         plus the chains term — LOO median 85.6% (worse), walk-forward
+//         better on only 1 of 4 cuts; (C) per-category dummies — LOO
+//         85.8%, walk-forward 0 of 4; (E) all 128 + dummies without
+//         chains — LOO 85.3%, 1 of 4; (F/G/H) chains term shrunk by
+//         0.25 / 0.50 / 0.75 — LOO 84.8% / 85.9% / 86.7%, none better
+//         on all four cuts; (J) chains plus a fitted growth term —
+//         LOO 83.8%, walk-forward worse on all four cuts. Bringing the
+//         34 back in, even with dummies, reintroduces the bias the
+//         clean fit removes; shrinking the chains term moves the
+//         model back toward the 2-term curve, which already loses.
+//         So radar-5 ships radar-4's model unchanged, with 500
+//         bootstrap refits (was 200) for more stable rank ranges —
+//         the ranges themselves are honestly unchanged (mean p90-p10
+//         width 37.3 ranks at 500 refits vs 37.4 at 200; the top-20
+//         mean is 15.7 vs 15.0), so nothing was tightened by hand.
 //   Priors (small, bounded, NOT fitted): growth 1 + clamp(change_7d,
 //         -60, 120)/100 * 0.25, maturity 0.8 + min(age, 1095)/1095 *
 //         0.2. They move a row by at most a few percent; the fitted
@@ -96,10 +116,10 @@ export const MODEL: ModelConstants = {
   farm_skip_net: -5,
 };
 
-export const MODEL_VERSION = 'radar-4';
+export const MODEL_VERSION = 'radar-5';
 export const EARLY_ROWS = 160;
 export const LIVE_ROWS = 24;
-export const BOOTSTRAP_REFITS = 200;
+export const BOOTSTRAP_REFITS = 500;
 export const BOOTSTRAP_SEED = 20261114;
 
 export interface FarmStep {
@@ -208,6 +228,7 @@ export interface WalkForwardEntry {
   size_median_ape: number;
   full_median_ape: number;
   radar3_median_ape: number;
+  cand_b_median_ape: number;
 }
 
 export interface Validation {
@@ -521,6 +542,40 @@ export function meanApe(predict: (p: SnapshotProtocol) => number, test: Snapshot
   return round4(errs.reduce((a, b) => a + b, 0) / errs.length);
 }
 
+/** A predictor from an arbitrary fitted feature set: OLS on the given
+ *  features, then the same bounded growth / maturity priors and the
+ *  same 0.5x wrapped-product discount the shipped model applies, so
+ *  challenger variants are compared on identical footing. `shrink`
+ *  scales the chains coefficient (feature index 2) toward 0. */
+export function predictWithFeats(
+  train: SnapshotProtocol[],
+  features: (p: SnapshotProtocol) => number[],
+  asOf: string,
+  model: ModelConstants = MODEL,
+  shrink = 1,
+): (p: SnapshotProtocol) => number {
+  const beta = fitOls(train, features);
+  const b = [...beta];
+  if (shrink !== 1 && b.length > 2) b[2] = beta[2]! * shrink;
+  return (p: SnapshotProtocol): number => {
+    const f = features(p);
+    let s = 0;
+    for (let i = 0; i < b.length; i++) s += b[i]! * f[i]!;
+    const pr = priors(p, asOf, model);
+    const d = productDiscount(p, model);
+    return Math.max(1, Math.round(Math.exp(s) * pr.growthMult * pr.maturityMult * d.discount));
+  };
+}
+
+/** Indicator features for the radar-5 candidate that fits on all 128
+ *  live-token protocols: [1, log TVL, log chains, is CEX, is wrapped /
+ *  staked / bridged]. */
+export function dummyFeats(p: SnapshotProtocol): number[] {
+  const isCex = p.category === 'CEX' ? 1 : 0;
+  const isWrapped = p.category !== null && EXCLUDED_CATEGORIES.includes(p.category) && p.category !== 'CEX' ? 1 : 0;
+  return [1, Math.log(p.tvl_usd), Math.log(Math.max(1, p.chains.length)), isCex, isWrapped];
+}
+
 /** Leave-one-out validation on the clean comparables. Every variant is
  *  refit on the clean set minus the held-out protocol — except the
  *  radar-3 curve, which is refit on all 128 live-token protocols
@@ -635,9 +690,12 @@ export function looValidation(
   const variants: { name: string; scope: 'clean' | 'all'; make: (train: SnapshotProtocol[]) => (p: SnapshotProtocol) => number }[] = [
     { name: 'flat 0.25x multiple', scope: 'clean', make: () => flat },
     { name: 'size curve, clean comparables (2-term)', scope: 'clean', make: sizeOnly },
-    { name: 'size + fitted chains (radar-4 core)', scope: 'clean', make: (t) => extra(t, 'chains') },
-    { name: 'size + fitted chains + bounded priors + discount (radar-4)', scope: 'clean', make: full },
+    { name: 'size + fitted chains (radar-5 core)', scope: 'clean', make: (t) => extra(t, 'chains') },
+    { name: 'size + fitted chains + bounded priors + discount (radar-5)', scope: 'clean', make: full },
     { name: 'size curve on all 128 comparables (radar-3)', scope: 'all', make: sizeOnly },
+    { name: 'all 128 + fitted CEX/wrapped dummies + chains (radar-5 candidate B)', scope: 'all', make: (t) => predictWithFeats(t, dummyFeats, asOf, model) },
+    { name: 'size + fitted chains, chains shrunk 0.5 (radar-5 candidate F)', scope: 'clean', make: (t) => predictWithFeats(t, (p) => [1, Math.log(p.tvl_usd), Math.log(Math.max(1, p.chains.length))], asOf, model, 0.5) },
+    { name: 'size + fitted chains + fitted growth (radar-5 candidate J)', scope: 'clean', make: (t) => predictWithFeats(t, (p) => [1, Math.log(p.tvl_usd), Math.log(Math.max(1, p.chains.length)), growthFrac(p, model)], asOf, model) },
     { name: 'category median multiple', scope: 'clean', make: catMedian },
     { name: 'per-category size curve, n>=8', scope: 'clean', make: (t) => catCurve(t, 8) },
     { name: 'category intercepts, n>=8', scope: 'clean', make: (t) => catIntercepts(t, 8) },
@@ -680,6 +738,7 @@ export function walkForward(
     const f = fitModel(train);
     const f2 = fitSizeCurve(train);
     const f3 = fitSizeCurve(trainAll);
+    const candB = predictWithFeats(trainAll, dummyFeats, asOf, model);
     out.push({
       cut,
       train_n: train.length,
@@ -688,6 +747,7 @@ export function walkForward(
       size_median_ape: medianApe((p) => Math.exp(f2.intercept + f2.slope * Math.log(p.tvl_usd)), test),
       full_median_ape: medianApe((p) => impliedValue(p, asOf, f, model).implied, test),
       radar3_median_ape: medianApe((p) => Math.exp(f3.intercept + f3.slope * Math.log(p.tvl_usd)), test),
+      cand_b_median_ape: medianApe(candB, test),
     });
   }
   return out;
@@ -721,7 +781,22 @@ export function validate(snapshot: Snapshot, model: ModelConstants = MODEL): Val
     {
       term: 'radar-3 curve (all 128 comparables, CEX and wrapped products in)',
       loo_median_ape: byName.get('size curve on all 128 comparables (radar-3)')!.loo_median_ape,
-      verdict: 'dropped as the fit set: worse than radar-4 on the same clean holdouts, and worse walk-forward on all four cuts',
+      verdict: 'dropped as the fit set: worse than radar-5 on the same clean holdouts, and worse walk-forward on all four cuts',
+    },
+    {
+      term: 'radar-5 candidate B: all 128 comparables with fitted CEX and wrapped/staked dummies plus the chains term',
+      loo_median_ape: byName.get('all 128 + fitted CEX/wrapped dummies + chains (radar-5 candidate B)')!.loo_median_ape,
+      verdict: 'dropped: bringing the 34 back in, even with dummies, reintroduces the bias the clean fit removes — worse on the median and better on only 1 of 4 walk-forward cuts',
+    },
+    {
+      term: 'radar-5 candidate F: chains term shrunk halfway toward zero',
+      loo_median_ape: byName.get('size + fitted chains, chains shrunk 0.5 (radar-5 candidate F)')!.loo_median_ape,
+      verdict: 'dropped: shrinking the chains term moves the model back toward the 2-term curve, which already loses — worse on the median and on all four walk-forward cuts',
+    },
+    {
+      term: 'radar-5 candidate J: chains plus a fitted growth term',
+      loo_median_ape: byName.get('size + fitted chains + fitted growth (radar-5 candidate J)')!.loo_median_ape,
+      verdict: 'dropped: worse than the shipped model on the median and on all four walk-forward cuts; growth survives only as a small bounded prior',
     },
     {
       term: 'category median multiple (radar-2 base)',
@@ -993,7 +1068,11 @@ export function rankRanges(
   const out = new Map<string, { p10: number; p50: number; p90: number }>();
   for (const [slug, list] of ranks) {
     const s = [...list].sort((a, b) => a - b);
-    out.set(slug, { p10: s[19]!, p50: s[99]!, p90: s[179]! });
+    out.set(slug, {
+      p10: s[Math.floor(0.1 * BOOTSTRAP_REFITS) - 1]!,
+      p50: s[Math.floor(0.5 * BOOTSTRAP_REFITS) - 1]!,
+      p90: s[Math.floor(0.9 * BOOTSTRAP_REFITS) - 1]!,
+    });
   }
   return out;
 }

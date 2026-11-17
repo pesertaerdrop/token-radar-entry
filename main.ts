@@ -1,15 +1,18 @@
-// Token Radar radar-4 entry (Node 22, standard library only).
+// Token Radar radar-5 entry (Node 22, standard library only).
 //
 // Reads the sealed snapshot from /input/snapshot.json (or --input
-// <file|dir>), scores every pre-token protocol with the radar-4 model in
-// lib/model.ts — a log-log size curve with a fitted chains term, fit on
-// the snapshot's 94 clean live-token comparables (CEX and wrapped /
-// staked / bridged products left out), validated leave-one-out and
-// walk-forward, with bootstrap rank ranges and netted farm economics —
-// writes the ranked board to /output/board.json, writes the dashboard
-// data to /output/data.js, copies dashboard/ and screenshots/ to
-// /output, and writes /output/dossier.json with the vendored make.fun
-// library. Deterministic: the same snapshot always writes the same bytes.
+// <file|dir>), scores every pre-token protocol with the radar-5 model in
+// lib/model.ts — radar-4's log-log size curve with a fitted chains term,
+// fit on the snapshot's 94 clean live-token comparables (CEX and wrapped /
+// staked / bridged products left out), kept unchanged after every
+// radar-5 challenger (all 128 comparables with fitted dummies, a shrunk
+// chains term, chains plus fitted growth) failed the blind-test bar —
+// validated leave-one-out and walk-forward, with bootstrap rank ranges
+// from 500 refits and netted farm economics — writes the ranked board
+// to /output/board.json, writes the dashboard data to /output/data.js,
+// copies dashboard/ and screenshots/ to /output, and writes
+// /output/dossier.json with the vendored make.fun library.
+// Deterministic: the same snapshot always writes the same bytes.
 //
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input ../input/snapshot.json
