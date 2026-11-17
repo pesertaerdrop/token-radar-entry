@@ -4,7 +4,7 @@
 [![rank](https://make.fun/badge/token-radar-01/pesertaerdrop/token-radar-entry/rank.svg)](https://make.fun/bounty/token-radar-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
 [![reward](https://make.fun/badge/token-radar-01/pesertaerdrop/token-radar-entry/reward.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
 
-Token Radar radar-3: a fitted value-curve pre-token protocol board — 200 protocols ranked by implied value from the sealed DefiLlama snapshot, the curve fit on 128 live-token comparables and tested leave-one-out and walk-forward, each row with a rank range from 200 refits and a 7-step farm plan netted to break-even in dollars, rendered as a no-network dark trading-terminal dashboard.
+Token Radar radar-4: a fitted value-curve pre-token protocol board — 200 protocols ranked by implied value from the sealed DefiLlama snapshot, the curve (log market cap on log TVL and log chains) fit on 94 clean live-token comparables and tested leave-one-out and walk-forward, each row with a rank range from 200 refits and a 7-step farm plan netted to break-even in dollars on a dated timeline, rendered as a no-network dark trading-terminal dashboard.
 
 ## Run it
 

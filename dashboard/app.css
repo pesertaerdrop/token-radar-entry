@@ -46,6 +46,17 @@ button { cursor: pointer; }
 .lede p b { color: var(--ink); }
 .facts { display: grid; gap: var(--s2); align-content: start; border-left: 1px solid var(--border); padding-left: var(--s5); }
 .fact { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.verdict { margin-top: var(--s3); padding: var(--s3) var(--s4); border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 8px 8px 0; color: var(--muted); max-width: 72ch; }
+.verdict b { color: var(--ink); }
+.chart-wrap { margin-top: var(--s4); }
+.chart { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .tick { fill: var(--muted); font-size: 11px; font-family: var(--font-num); text-anchor: middle; }
+.chart .tick.end { text-anchor: end; }
+.chart .fit-line { fill: none; stroke: var(--accent); stroke-width: 2; }
+.chart .dot { fill: #5b7fa6; opacity: 0.75; }
+.chart .row-dot { fill: var(--accent); stroke: #04211d; stroke-width: 2; }
+.chart .row-label { fill: var(--ink); font-size: 12px; font-weight: 600; font-family: var(--font-num); }
 .fact b { font-family: var(--font-num); font-size: 15px; font-weight: 600; color: var(--accent); }
 .fact span { color: var(--muted); font-size: 13px; }
 .controls { display: flex; flex-wrap: wrap; align-items: end; gap: var(--s3); padding: var(--s4) 0; border-top: 1px solid var(--border); }
@@ -106,7 +117,8 @@ tbody tr[data-selected="true"] { background: #12283a; }
 .detail-section { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--border); }
 .detail-section h3 { margin-bottom: var(--s2); }
 .equation { display: grid; gap: var(--s2); font-family: var(--font-num); font-size: 13px; }
-.equation div { display: flex; justify-content: space-between; gap: var(--s3); }
+.equation div { display: flex; justify-content: space-between; gap: var(--s3); min-width: 0; }
+.equation .num { white-space: normal; text-align: right; }
 .equation span { color: var(--muted); }
 .equation .total { border-top: 1px solid var(--border); padding-top: var(--s2); }
 .equation .total b { color: var(--accent); }
