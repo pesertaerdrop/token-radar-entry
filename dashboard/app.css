@@ -1,4 +1,4 @@
-/* Token Radar radar-2 — dark trading terminal. One palette, one spacing
+/* Token Radar radar-3 — dark trading terminal. One palette, one spacing
    scale, two type families. No network: no fonts, no images, no links out. */
 :root {
   --canvas: #070b12;
@@ -83,6 +83,10 @@ tbody tr[data-selected="true"] { background: #12283a; }
 .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
 .status.live::before { background: var(--positive); }
 .pill { display: inline-block; padding: 1px 7px; border: 1px solid var(--border-strong); border-radius: 20px; font-size: 11px; color: var(--muted); font-family: var(--font-num); }
+.call { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-family: var(--font-num); white-space: nowrap; }
+.call.farm { background: rgba(52, 211, 153, 0.14); color: var(--positive); border: 1px solid rgba(52, 211, 153, 0.4); }
+.call.thin { background: rgba(245, 181, 68, 0.12); color: var(--amber); border: 1px solid rgba(245, 181, 68, 0.4); }
+.call.skip { background: rgba(242, 109, 109, 0.12); color: var(--negative); border: 1px solid rgba(242, 109, 109, 0.4); }
 .model { margin-top: var(--s4); padding: var(--s5); display: grid; gap: var(--s3); }
 .formula { font-family: var(--font-num); font-size: 13px; line-height: 1.7; color: var(--accent); overflow-wrap: anywhere; background: var(--canvas); border: 1px solid var(--border); border-radius: 8px; padding: var(--s3) var(--s4); }
 .model table { font-size: 13px; }

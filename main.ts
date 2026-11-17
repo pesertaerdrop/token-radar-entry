@@ -1,11 +1,14 @@
-// Token Radar radar-2 entry (Node 22, standard library only).
+// Token Radar radar-3 entry (Node 22, standard library only).
 //
 // Reads the sealed snapshot from /input/snapshot.json (or --input
-// <file|dir>), scores every pre-token protocol with the radar-2 model in
-// lib/model.ts, writes the ranked board to /output/board.json, writes the
-// dashboard data to /output/data.js, copies dashboard/ and screenshots/ to
-// /output, and writes /output/dossier.json with the vendored make.fun
-// library. Deterministic: the same snapshot always writes the same bytes.
+// <file|dir>), scores every pre-token protocol with the radar-3 model in
+// lib/model.ts — a log-log size curve fit on the snapshot's live-token
+// protocols, validated leave-one-out and walk-forward, with bootstrap
+// rank ranges and netted farm economics — writes the ranked board to
+// /output/board.json, writes the dashboard data to /output/data.js,
+// copies dashboard/ and screenshots/ to /output, and writes
+// /output/dossier.json with the vendored make.fun library.
+// Deterministic: the same snapshot always writes the same bytes.
 //
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input ../input/snapshot.json
